@@ -1,4 +1,6 @@
 # Windows 10/11 Hardening Script 
+Original script by @ZephrFish. I have made some $\textcolor{orange}{\textsf{small changes}}$ to adapt it to my machines.
+
 ## Overview
 This script enhances the security of Windows operating systems by making various system modifications. It includes adjusting settings, policies, and features to reduce vulnerabilities and protect against various cyber threats.
 
