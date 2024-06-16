@@ -10,15 +10,34 @@ If (!([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]
 	Exit
 }
 
-
-
-
 # Warning about the script's impact
 Write-Host "WARNING: This script will make significant changes to your system's configuration to harden security. Please ensure you understand the impact of each change before proceeding." -ForegroundColor Red
 $continue = Read-Host "Do you want to continue? (Y/N)"
 if ($continue -ne 'Y') {
     Write-Host "Operation aborted by the user."
     exit
+}
+
+# Option to create a restore point
+Write-Host "Do you want to create a restore point?" -ForegroundColor Red
+$continue = Read-Host "Do you want to continue? (Y/N)"
+if ($continue -eq 'Y') {
+    Enable-ComputerRestore -Drive "C:"
+    $systemRestorePath = "HKLM:SOFTWARE\Microsoft\Windows NT\CurrentVersion\SystemRestore"
+    $valueName = "SystemRestorePointCreationFrequency"
+    try {
+        $valueSRPCF = Get-ItemPropertyValue -Path $systemRestorePath -Name $valueName
+        Set-ItemProperty -Path $systemRestorePath -Name $valueName -Value 0
+    }
+    catch {
+        New-ItemProperty -Path $systemRestorePath -Name $valueName -Value 0 -PropertyType DWord -Force
+        $valueSRPCF = 1440 # The default value is 1440 minutes (24 hours).
+    }
+
+    Checkpoint-Computer -Description "Before Windows Hardening Script" -RestorePointType MODIFY_SETTINGS
+    Set-ItemProperty -Path $systemRestorePath -Name $valueName -Value $valueSRPCF
+    Write-Host "A restore point has been created:"
+    Get-ComputerRestorePoint | Sort-Object -Property CreationTime -Descending | Format-Table -AutoSize
 }
 
 Write-Host "We are going to first check that all the expected Registry paths exist before executing"
@@ -47,7 +66,6 @@ $registryPaths = @(
     "HKLM:\SYSTEM\CurrentControlSet\Control\Session Manager\Environment",
     "HKCU:\SYSTEM\CurrentControlSet\Policies\EarlyLaunch",
     "HKCU:\SOFTWARE\Policies\Microsoft\MicrosoftEdge\PhishingFilter",
-    "HKLM:\SOFTWARE\Policies\Google\Chrome",
     "HKCU:\Software\Microsoft\Office\14.0\Word\Options",
     "HKCU:\Software\Microsoft\Office\14.0\Word\Options\WordMail",
     "HKCU:\Software\Microsoft\Office\15.0\Word\Options",
@@ -142,29 +160,36 @@ Set-ItemProperty -Path "HKCU:\SYSTEM\CurrentControlSet\Policies\EarlyLaunch" -Na
 Set-ItemProperty -Path "HKCU:\SOFTWARE\Policies\Microsoft\MicrosoftEdge\PhishingFilter" -Name "EnabledV9" -Value 1
 
 # Google Chrome and other settings
-# Ensure the registry path exists, create if not
-$chromePolicyPath = "HKLM:\SOFTWARE\Policies\Google\Chrome"
-if (-not (Test-Path $chromePolicyPath)) {
-    New-Item -Path $chromePolicyPath -Force
+$defaultBrowser = Get-ItemPropertyValue -Path "HKCU:\Software\Microsoft\Windows\Shell\Associations\UrlAssociations\http\UserChoice" -Name ProgId
+
+if ($defaultBrowser -like "*Chrome*") {
+    Write-Host "Chrome has been detected as the default browser. Do you want to apply changes to policies and other settings?" -ForegroundColor Yellow
+    $continue = Read-Host "Do you want to continue? (Y/N)"
+    if ($continue -eq 'Y') {
+    	# Ensure the registry path exists, create if not
+	$chromePolicyPath = "HKLM:\SOFTWARE\Policies\Google\Chrome"
+	if (-not (Test-Path $chromePolicyPath)) {
+	    New-Item -Path $chromePolicyPath -Force
+	}
+	
+	# Setting Chrome policies
+	Set-ItemProperty -Path $chromePolicyPath -Name "AdvancedProtectionAllowed" -Value 1 -Type DWord
+	Set-ItemProperty -Path $chromePolicyPath -Name "AllowCrossOriginAuthPrompt" -Value 0 -Type DWord
+	Set-ItemProperty -Path $chromePolicyPath -Name "AlwaysOpenPdfExternally" -Value 1 -Type DWord
+	Set-ItemProperty -Path $chromePolicyPath -Name "AmbientAuthenticationInPrivateModesEnabled" -Value 0 -Type DWord
+	Set-ItemProperty -Path $chromePolicyPath -Name "AudioCaptureAllowed" -Value 0 -Type DWord
+	Set-ItemProperty -Path $chromePolicyPath -Name "AudioSandboxEnabled" -Value 1 -Type DWord
+	Set-ItemProperty -Path $chromePolicyPath -Name "BlockExternalExtensions" -Value 1 -Type DWord
+	Set-ItemProperty -Path $chromePolicyPath -Name "DnsOverHttpsMode" -Value "on" -Type String
+	Set-ItemProperty -Path $chromePolicyPath -Name "SSLVersionMin" -Value "tls1" -Type String
+	Set-ItemProperty -Path $chromePolicyPath -Name "ScreenCaptureAllowed" -Value 0 -Type DWord
+	Set-ItemProperty -Path $chromePolicyPath -Name "SitePerProcess" -Value 1 -Type DWord
+	Set-ItemProperty -Path $chromePolicyPath -Name "TLS13HardeningForLocalAnchorsEnabled" -Value 1 -Type DWord
+	Set-ItemProperty -Path $chromePolicyPath -Name "VideoCaptureAllowed" -Value 0 -Type DWord
+	
+	Write-Host "Chrome policy settings have been updated." -ForegroundColor Green
+    }
 }
-
-# Setting Chrome policies
-Set-ItemProperty -Path $chromePolicyPath -Name "AdvancedProtectionAllowed" -Value 1 -Type DWord
-Set-ItemProperty -Path $chromePolicyPath -Name "AllowCrossOriginAuthPrompt" -Value 0 -Type DWord
-Set-ItemProperty -Path $chromePolicyPath -Name "AlwaysOpenPdfExternally" -Value 1 -Type DWord
-Set-ItemProperty -Path $chromePolicyPath -Name "AmbientAuthenticationInPrivateModesEnabled" -Value 0 -Type DWord
-Set-ItemProperty -Path $chromePolicyPath -Name "AudioCaptureAllowed" -Value 0 -Type DWord
-Set-ItemProperty -Path $chromePolicyPath -Name "AudioSandboxEnabled" -Value 1 -Type DWord
-Set-ItemProperty -Path $chromePolicyPath -Name "BlockExternalExtensions" -Value 1 -Type DWord
-Set-ItemProperty -Path $chromePolicyPath -Name "DnsOverHttpsMode" -Value "on" -Type String
-Set-ItemProperty -Path $chromePolicyPath -Name "SSLVersionMin" -Value "tls1" -Type String
-Set-ItemProperty -Path $chromePolicyPath -Name "ScreenCaptureAllowed" -Value 0 -Type DWord
-Set-ItemProperty -Path $chromePolicyPath -Name "SitePerProcess" -Value 1 -Type DWord
-Set-ItemProperty -Path $chromePolicyPath -Name "TLS13HardeningForLocalAnchorsEnabled" -Value 1 -Type DWord
-Set-ItemProperty -Path $chromePolicyPath -Name "VideoCaptureAllowed" -Value 0 -Type DWord
-
-Write-Host "Chrome policy settings have been updated." -ForegroundColor Green
-
 
 # Enable and Configure Microsoft Office Security Settings
 # Harden all version of MS Office itself against common malspam attacks
@@ -676,5 +701,12 @@ if ($userConfirmation -eq 'Y') {
     Write-Host "Operation cancelled by the user." -ForegroundColor Red
 }
 
+# Disable script execution for Powershell
+Write-Host "INFO: Do you want to disable script execution for Powershell?" -ForegroundColor Red
+$continue = Read-Host "Do you want to continue? (Y/N)"
+if ($continue -eq 'Y') {
+    Set-ExecutionPolicy Restricted
+    Write-Host "Script usage using Powershell has been disabled." -ForegroundColor Green
+}
 
 Write-Host "All selected hardening tasks have been completed. Please review system functionality to ensure no critical operations are impacted." -ForegroundColor Green
