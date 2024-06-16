@@ -15,10 +15,12 @@ This script enhances the security of Windows operating systems by making various
 
 ## Key Features
 - Admin Check: Ensures the script is executed with administrative privileges for effective changes.
+- $\textcolor{orange}{\textsf{Option to create a system restore point.}}$
 - Initial Warning and Consent: This alerts users about the significant system changes the script will make and seeks their consent to proceed.
 - File Association Changes: This feature modifies file associations for potentially dangerous file types in Notepad to obscure malicious content. It offers optional changes for .bat and .ps1 files.
 - Windows Defender Configuration: Activates and configures Windows Defender settings to enhance malware protection.
 - Internet Browser Settings: Adjusts Microsoft Edge and Google Chrome settings to improve web browsing security.
+- $\textcolor{orange}{\textsf{Now Chrome settings are optional if you have it installed by default.}}$
 - Microsoft Office Security Settings: This feature applies security settings across different versions of Microsoft Office to mitigate risks from malspam attacks and other vulnerabilities.
 - General Windows Security Enhancements: DNS client and SMB1 configuration, TCP/IP configuration, system and security policies adjustments, Wi-Fi and NetBIOS configuration, disabling PowerShell 2.0, cryptography, and Kerberos configuration.
 - Windows Remote Access, Removable Media, and Sharing/SMB Settings: Harden remote access settings, disable unnecessary features and protocols, and enforce security policies for file sharing.
@@ -27,10 +29,10 @@ This script enhances the security of Windows operating systems by making various
 - Privacy Settings and System Cleanup: This program implements a range of privacy settings adjustments and removes pre-installed applications deemed unnecessary.
 - Advanced Logging and Audit Policies: Enhances system logging and audit policies for better monitoring and detection capabilities.
 - Optional Security Lockdown Options: This option offers a series of optional yet significant security enhancements, including NTLMv2 enforcement, SMB server signing, enabling Windows Defender features, and more.
+- $\textcolor{orange}{\textsf{Ability to restrict the launch of scripts using PowerShell.}}$
 
 ## What this Repo Includes
 
-- Harden.cmd - Original Hardening script written as a batch script but has no warnings, so is very much a fire and hope for the best
 - Harden_PS.ps1 - Improved Hardening script with additional features, checks it is being run as admin first and also warns you before it does certain actions
 
 This has been tested on Windows 10 and Windows 11 Dev VM. Your mileage may vary, but gives a good baseline to harden a build.
@@ -41,6 +43,7 @@ This has been tested on Windows 10 and Windows 11 Dev VM. Your mileage may vary,
 - add logging of changed files and settings
 - add granular controls to only do certain thjngs
 - add ability to back up reg keys before and after changes 
-
+- $\textcolor{orange}{\textsf{add support for other browsers (Firefox, Opera, and more)}}$
+  
 ## References
 - Originally built off the back of Paving The Way to DA series; https://blog.zsec.uk/paving-2-da-wholeset/
