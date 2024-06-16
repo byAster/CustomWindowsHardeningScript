@@ -5,8 +5,7 @@
 # Before we roll out we must be admin for things to run
 If (!([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole] "Administrator"))
 {
-	WriteToLog -Message "Please run as administrator." -color "red"
-	Read-Host
+	Write-Host "Please run as administrator." -ForegroundColor Red
 	Exit
 }
 
