@@ -36,8 +36,11 @@ This script enhances the security of Windows operating systems by making various
 
 - Harden_PS.ps1 - Improved Hardening script with additional features, checks it is being run as admin first and also warns you before it does certain actions
 
-- This has been tested on Windows 10 and Windows 11 Dev VM. Your mileage may vary, but gives a good baseline to harden a build.
-byAster: Windows 10 Pro, 22H2
+## Tested
+  - @ZephrFish: Windows 10 and Windows 11 Dev VM.
+  - $\textcolor{orange}{\textsf{@byAster}}$: Windows 10 Pro (version 22H2) and Windows 11 Pro (version 23H2).
+
+Your mileage may vary, but gives a good baseline to harden a build.
 
 ## Future / Todo
 - Build out reporting function for before and after
