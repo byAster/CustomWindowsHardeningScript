@@ -1,5 +1,6 @@
 <#
     ZephrFish's Ultimate Windows Lockdown and Hardening Script 2024
+    Customized by Aster
 #>
 
 # Before we roll out we must be admin for things to run
@@ -112,7 +113,8 @@ $registryPaths = @(
     "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System",
     "HKLM:\SYSTEM\CurrentControlSet\Services\Netlogon\Parameters",
     "HKLM:\Software\Microsoft\Windows\CurrentVersion\Policies\System",
-    "HKLM:\SOFTWARE\Policies\Microsoft\Windows\DeviceGuard"
+    "HKLM:\SOFTWARE\Policies\Microsoft\Windows\DeviceGuard",
+    "HKLM:\SOFTWARE\Policies\Microsoft\Windows NT\Printers"
 )
 
 # Ensure each path exists before setting properties
@@ -264,7 +266,13 @@ Write-Host "Office settings have been updated." -ForegroundColor Green
 
 # Network Hardening
 # Stop and disable the Bonjour Service if installed
-Get-Service -Name "Bonjour Service" | Stop-Service -PassThru | Set-Service -StartupType Disabled
+$service = Get-Service -Name "Bonjour Service" -ErrorAction SilentlyContinue
+if ($service -eq $null) {
+    Write-Host "Bonjour Service is not installed." -ForegroundColor Green
+} else {
+    Get-Service -Name "Bonjour Service" | Stop-Service -PassThru | Set-Service -StartupType Disabled
+    Write-Host "Bonjour Service is disabled." -ForegroundColor Green
+}
 
 # Disable NetBIOS over TCP/IP for all network adapters
 Get-WmiObject Win32_NetworkAdapterConfiguration | Where-Object { $_.IPEnabled -eq $true } | ForEach-Object { $_.SetTcpipNetbios(2) }
@@ -329,7 +337,8 @@ Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Services\mrxsmb10" -Name 
 New-Item -Path "HKLM:\SYSTEM\CurrentControlSet\Services\LanmanServer\Parameters" -Force
 Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Services\LanmanServer\Parameters" -Name "SMB1" -Value 0 -Type DWord
 Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Services\LanManServer\Parameters" -Name "RestrictNullSessAccess" -Value 1 -Type DWord
-New-Item -Path "HKLM:\SYSTEM\CurrentControlSet\Control\Lsa" -Force
+
+New-Item -Path "HKLM:\SYSTEM\CurrentControlSet\Control\Lsa" -Force -ErrorAction SilentlyContinue
 Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\Lsa" -Name "RestrictAnonymousSAM" -Value 1 -Type DWord
 Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\Lsa" -Name "RestrictAnonymous" -Value 1 -Type DWord
 Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\Lsa" -Name "EveryoneIncludesAnonymous" -Value 0 -Type DWord
@@ -377,12 +386,10 @@ if ($continueFirewall -ne 'Y') {
     # Enable Windows Firewall for all profiles
 Set-NetFirewallProfile -Profile Domain,Public,Private -Enabled True
 
-# Enable Firewall Logging for the current profile
-$LogFilePath = "$env:SystemRoot\system32\LogFiles\Firewall\pfirewall.log"
-Set-NetFirewallProfile -LoggingFileName $LogFilePath
-Set-NetFirewallProfile -LoggingMaxFileSize 4096
-Set-NetFirewallProfile -LoggingAllowed $True
-Set-NetFirewallProfile -LoggingBlocked $True
+# Enable Firewall Logging for the current profile - fixed for my win10 (byAster)
+$logFilePath = "$env:SystemRoot\system32\LogFiles\Firewall\pfirewall.log"
+$currentProfile = (Get-NetConnectionProfile).NetworkCategory
+Set-NetFireWallProfile -Profile $currentProfile -LogBlocked True -LogMaxSize 4096 -LogFileName $logFilePath
 
 # Block all inbound connections on Public profile
 Set-NetFirewallProfile -Profile Public -DefaultInboundAction Block -DefaultOutboundAction Allow
@@ -400,14 +407,13 @@ foreach ($program in $programs) {
 }
 
 }
-# Windows Privacy Settings, Logging, and more
-    Write-Host "WARNING: We're about to remove pre-installed applications that Windows comes with by default. This action cannot be undone." -ForegroundColor Red
-    $continue = Read-Host "Do you want to continue with the cleanup? (Y/N)"
-    if ($continue -ne 'Y') {
-        Write-Host "Operation aborted by the user."
-        return
-    }
 
+# Windows Privacy Settings, Logging, and more
+Write-Host "WARNING: We're about to remove pre-installed applications that Windows comes with by default. This action cannot be undone." -ForegroundColor Red
+$continue = Read-Host "Do you want to continue with the cleanup? (Y/N)"
+if ($continue -ne 'Y') {
+    Write-Host "Operation aborted by the user."
+} else {
     # Re-register all AppxPackages for all users in case it's needed for repair
     Get-AppxPackage -AllUsers | ForEach-Object {
         Write-Host "Re-registering package: $($_.Name)"
@@ -419,9 +425,9 @@ foreach ($program in $programs) {
         "Microsoft.BingWeather", "Microsoft.DesktopAppInstaller", "Microsoft.GetHelp", 
         "Microsoft.Getstarted", "Microsoft.Messaging", "Microsoft.Microsoft3DViewer", 
         "Microsoft.MicrosoftOfficeHub", "Microsoft.MicrosoftSolitaireCollection", 
-        "Microsoft.MicrosoftStickyNotes", "Microsoft.MixedReality.Portal", "Microsoft.Office.OneNote", 
+        "Microsoft.MicrosoftStickyNotes", "Microsoft.MixedReality.Portal", 
         "Microsoft.OneConnect", "Microsoft.Print3D", "Microsoft.SkypeApp", "Microsoft.Wallet", 
-        "Microsoft.WebMediaExtensions", "Microsoft.WebpImageExtension", "Microsoft.WindowsAlarms", 
+        "Microsoft.WebMediaExtensions", "Microsoft.WebpImageExtension", 
         "Microsoft.WindowsCamera", "microsoft.windowscommunicationsapps", "Microsoft.WindowsFeedbackHub", 
         "Microsoft.WindowsMaps", "Microsoft.WindowsSoundRecorder", "Microsoft.Xbox.TCUI", 
         "Microsoft.XboxApp", "Microsoft.XboxGameOverlay", "Microsoft.XboxGamingOverlay", 
@@ -430,7 +436,7 @@ foreach ($program in $programs) {
         "Windows.ContactSupport", "PandoraMedia", "AdobeSystemIncorporated.AdobePhotoshop", 
         "Duolingo", "Microsoft.BingNews", "Microsoft.Office.Sway", "Microsoft.Advertising.Xaml", 
         "Microsoft.NET.Native.Framework.1.*", "Microsoft.Services.Store.Engagement", 
-        "ActiproSoftware", "EclipseManager", "SpotifyAB.SpotifyMusic", "king.com.*"
+        "ActiproSoftware", "EclipseManager", "king.com.*"
     )
 
     # Loop through the array to remove each specified AppxPackage
@@ -441,7 +447,8 @@ foreach ($program in $programs) {
         }
     }
 
-Write-Host "Crapware removal process completed." -ForegroundColor Green
+    Write-Host "Crapware removal process completed." -ForegroundColor green
+}
 
 # Set Windows Analytics to limited enhanced if enhanced is enabled
 New-Item -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\DataCollection" -Force | Out-Null
@@ -576,33 +583,70 @@ Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\PowerShell" -N
 Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\PowerShell" -Name "EnableScriptBlockLogging" -Value 1
 
 # Enable Windows Event Detailed Logging
-$auditCategories = @(
-    "Security Group Management",
-    "Process Creation",
-    "Logoff",
-    "Logon",
-    "Filtering Platform Connection",
-    "Removable Storage",
-    "SAM",
-    "Filtering Platform Policy Change",
-    "IPsec Driver",
-    "Security State Change",
-    "Security System Extension",
-    "System Integrity"
-)
+# Support for Spanish language systems is added
+$systemLocale = Get-WinSystemLocale
+$languageCode = $systemLocale.Name
+
+if ($languageCode -eq 'es-ES') {
+    $auditCategories = @(
+        "Administración de grupos de seguridad",
+        "Creación del proceso",
+        "Cerrar sesión",
+        "Inicio de sesión",
+        "Conexión de Plataforma de filtrado",
+        "Almacenamiento extraíble",
+        "SAM",
+        "Cambio de la directiva de Plataforma de filtrado",
+        "Controlador IPsec",
+        "Cambio de estado de seguridad",
+        "Extensión del sistema de seguridad",
+        "Integridad del sistema"
+    )
+} else {
+    $auditCategories = @(
+        "Security Group Management",
+        "Process Creation",
+        "Logoff",
+        "Logon",
+        "Filtering Platform Connection",
+        "Removable Storage",
+        "SAM",
+        "Filtering Platform Policy Change",
+        "IPsec Driver",
+        "Security State Change",
+        "Security System Extension",
+        "System Integrity"
+    )
+}
 
 foreach ($category in $auditCategories) {
-    if ($category -eq "Logoff" -or $category -eq "Filtering Platform Connection" -or $category -eq "SAM" -or $category -eq "Filtering Platform Policy Change") {
+    if ($languageCode -eq 'es-ES' -and ($category -eq "Cerrar sesión" `
+        -or $category -eq "Conexión de Plataforma de filtrado" `
+        -or $category -eq "SAM" `
+        -or $category -eq "Cambio de Política de la Plataforma de Filtrado")) {
+
         $success = "enable"
         $failure = "disable"
+
+    } elseif ($category -eq "Logoff" `
+              -or $category -eq "Filtering Platform Connection" `
+              -or $category -eq "SAM" -or $category -eq "Filtering Platform Policy Change") {
+
+        $success = "enable"
+        $failure = "disable"
+
     } else {
+
         $success = "enable"
         $failure = "enable"
+
     }
+    Write-Host "$category /success:$success /failure:$failure"
     auditpol /set /subcategory:"$category" /success:$success /failure:$failure
 }
 
 Write-Host "Windows Event Log and Auditing Policies are configured." -ForegroundColor Green
+
 
 # Optional Additional Security Lockdown Options
 # Summary of actions to be taken
