@@ -24,19 +24,20 @@ This script enhances the security of Windows operating systems by making various
 - Microsoft Office Security Settings: This feature applies security settings across different versions of Microsoft Office to mitigate risks from malspam attacks and other vulnerabilities.
 - General Windows Security Enhancements: DNS client and SMB1 configuration, TCP/IP configuration, system and security policies adjustments, Wi-Fi and NetBIOS configuration, disabling PowerShell 2.0, cryptography, and Kerberos configuration.
 - Windows Remote Access, Removable Media, and Sharing/SMB Settings: Harden remote access settings, disable unnecessary features and protocols, and enforce security policies for file sharing.
+- $\textcolor{orange}{\textsf{Added support for Spanish language systems when enabling verbose Windows event logging.}}$
 - Biometrics and App Privacy: Adjusts settings to enhance privacy and security regarding biometrics and application permissions.
-- Firewall Modifications: Enables Windows Firewall for all profiles, configures logging, and blocks specific binaries from making outbound connections.
-- Privacy Settings and System Cleanup: This program implements a range of privacy settings adjustments and removes pre-installed applications deemed unnecessary.
+- Firewall Modifications: Enables Windows Firewall for all profiles, configures logging ($\textcolor{orange}{\textsf{fixed bug}}$), and blocks specific binaries from making outbound connections.
+- Privacy Settings and System Cleanup: This program implements a range of privacy settings adjustments and removes pre-installed applications deemed unnecessary ($\textcolor{orange}{\textsf{OneNote, Windows Alarms and Spotify will be preserved}}$).
 - Advanced Logging and Audit Policies: Enhances system logging and audit policies for better monitoring and detection capabilities.
 - Optional Security Lockdown Options: This option offers a series of optional yet significant security enhancements, including NTLMv2 enforcement, SMB server signing, enabling Windows Defender features, and more.
-- $\textcolor{orange}{\textsf{Ability to restrict the launch of scripts using PowerShell.}}$
+- $\textcolor{orange}{\textsf{Capability to restrict script execution through PowerShell.}}$
 
 ## What this Repo Includes
 
 - Harden_PS.ps1 - Improved Hardening script with additional features, checks it is being run as admin first and also warns you before it does certain actions
 
-This has been tested on Windows 10 and Windows 11 Dev VM. Your mileage may vary, but gives a good baseline to harden a build.
-
+- This has been tested on Windows 10 and Windows 11 Dev VM. Your mileage may vary, but gives a good baseline to harden a build.
+byAster: Windows 10 Pro, 22H2
 
 ## Future / Todo
 - Build out reporting function for before and after
