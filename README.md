@@ -16,6 +16,7 @@ This script enhances the security of Windows operating systems by making various
 ## Key Features
 - Admin Check: Ensures the script is executed with administrative privileges for effective changes.
 - $\textcolor{orange}{\textsf{Option to create a system restore point.}}$
+- $\textcolor{orange}{\textsf{Option to create a backup.}}$
 - Initial Warning and Consent: This alerts users about the significant system changes the script will make and seeks their consent to proceed.
 - File Association Changes: This feature modifies file associations for potentially dangerous file types in Notepad to obscure malicious content. It offers optional changes for .bat and .ps1 files.
 - Windows Defender Configuration: Activates and configures Windows Defender settings to enhance malware protection.
@@ -46,7 +47,6 @@ Your mileage may vary, but gives a good baseline to harden a build.
 - Build out reporting function for before and after
 - add logging of changed files and settings
 - add granular controls to only do certain thjngs
-- add ability to back up reg keys before and after changes 
 - $\textcolor{orange}{\textsf{add support for other browsers (Firefox, Opera, and more)}}$
   
 ## References
