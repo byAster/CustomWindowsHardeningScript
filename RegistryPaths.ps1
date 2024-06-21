@@ -51,7 +51,6 @@ function Get-RegistryPaths {
         "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon",
         "HKLM:\SYSTEM\CurrentControlSet\Services\Netlogon\Parameters",
         "HKLM:\SOFTWARE\Policies\Microsoft\Windows\DeviceGuard",
-        "HKLM:\SOFTWARE\Policies\Microsoft\Windows NT\Printers",
-		"HKLM:\SOFTWARE\Policies\Microsoft\Windows NT\NoExiste"
-    )
+        "HKLM:\SOFTWARE\Policies\Microsoft\Windows NT\Printers"
+        )
 }
