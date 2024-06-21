@@ -40,6 +40,14 @@ if ($continue -eq 'Y') {
     Get-ComputerRestorePoint | Sort-Object -Property CreationTime -Descending | Format-Table -AutoSize
 }
 
+# Option to create a backup
+Write-Host "Do you want to create a backup?" -ForegroundColor Red
+$continue = Read-Host "Do you want to continue? (Y/N)"
+if ($continue -eq 'Y') {
+    Write-Output "Running script Backup_PS.ps1..."
+    & .\Backup_PS.ps1
+}
+
 Write-Host "We are going to first check that all the expected Registry paths exist before executing"
 function LetsAllCheckRegExist {
     param (
@@ -61,62 +69,10 @@ function LetsAllCheckRegExist {
     }
 }
 
-# Provided registry paths
-$registryPaths = @(
-    "HKLM:\SYSTEM\CurrentControlSet\Control\Session Manager\Environment",
-    "HKCU:\SYSTEM\CurrentControlSet\Policies\EarlyLaunch",
-    "HKCU:\SOFTWARE\Policies\Microsoft\MicrosoftEdge\PhishingFilter",
-    "HKCU:\Software\Microsoft\Office\14.0\Word\Options",
-    "HKCU:\Software\Microsoft\Office\14.0\Word\Options\WordMail",
-    "HKCU:\Software\Microsoft\Office\15.0\Word\Options",
-    "HKCU:\Software\Microsoft\Office\15.0\Word\Options\WordMail",
-    "HKCU:\Software\Microsoft\Office\16.0\Word\Options",
-    "HKCU:\Software\Microsoft\Office\16.0\Word\Options\WordMail",
-    "HKLM:\SOFTWARE\Policies\Microsoft\Windows NT\DNSClient",
-    "HKLM:\SYSTEM\CurrentControlSet\Services\Dnscache\Parameters",
-    "HKLM:\SYSTEM\CurrentControlSet\Services\LanmanServer\Parameters",
-    "HKLM:\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters",
-    "HKLM:\SYSTEM\CurrentControlSet\Services\Tcpip6\Parameters",
-    "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System",
-    "HKLM:\SYSTEM\CurrentControlSet\Control\Session Manager",
-    "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\Attachments",
-    "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Explorer",
-    "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\Explorer",
-    "HKLM:\SYSTEM\CurrentControlSet\Services\mrxsmb10",
-    "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Image File Execution Options\LSASS.exe",
-    "HKLM:\SOFTWARE\Policies\Microsoft\Windows\CredentialsDelegation",
-    "HKLM:\SOFTWARE\Policies\Microsoft\Windows\WinRM\Service",
-    "HKLM:\SOFTWARE\Policies\Microsoft\Windows NT\Rpc",
-    "HKLM:\SOFTWARE\Policies\Microsoft\Windows\WinRM\Client",
-    "HKLM:\Software\Microsoft\Windows NT\CurrentVersion\Schedule",
-    "HKLM:\SYSTEM\CurrentControlSet\Control",
-    "HKLM:\SOFTWARE\Policies\Microsoft\Biometrics\FacialFeatures",
-    "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Personalization",
-    "HKLM:\SOFTWARE\Policies\Microsoft\Windows\AppPrivacy",
-    "HKLM:\SOFTWARE\Policies\Microsoft\Windows\DataCollection",
-    "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Diagnostics\DiagTrack",
-    "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\CapabilityAccessManager\ConsentStore",
-    "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Search",
-    "HKLM:\SOFTWARE\Policies\Microsoft\Windows\System",
-    "HKLM:\SOFTWARE\Policies\Microsoft\Windows\GameDVR",
-    "HKLM:\SOFTWARE\Policies\Microsoft\Windows\CloudContent",
-    "HKLM:\SOFTWARE\Policies\Microsoft\Windows\CurrentVersion\PushNotifications",
-    "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System\Audit",
-    "HKLM:\SYSTEM\CurrentControlSet\Control\Lsa",
-    "HKLM:\SOFTWARE\Policies\Microsoft\Windows\PowerShell",
-    "HKLM:\SOFTWARE\Policies\Microsoft\WindowsFirewall\DomainProfile\Services\FileAndPrint",
-    "HKLM:\SOFTWARE\Policies\Microsoft\WindowsFirewall\StandardProfile\Services\FileAndPrint",
-    "HKLM:\SOFTWARE\Microsoft\Windows Defender\Real-Time Protection",
-    "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Network Connections",
-    "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Group Policy\{35378EAC-683F-11D2-A89A-00C04FBBCFA2}",
-    "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon",
-    "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System",
-    "HKLM:\SYSTEM\CurrentControlSet\Services\Netlogon\Parameters",
-    "HKLM:\Software\Microsoft\Windows\CurrentVersion\Policies\System",
-    "HKLM:\SOFTWARE\Policies\Microsoft\Windows\DeviceGuard",
-    "HKLM:\SOFTWARE\Policies\Microsoft\Windows NT\Printers"
-)
-
+# Array of registry key paths.
+. ./RegistryPaths.ps1
+$registryPaths = Get-RegistryPaths
+	
 # Ensure each path exists before setting properties
 foreach ($path in $registryPaths) {
     LetsAllCheckRegExist -Path $path
@@ -420,24 +376,9 @@ if ($continue -ne 'Y') {
         Add-AppxPackage -DisableDevelopmentMode -Register "$($_.InstallLocation)\AppXManifest.xml" -ErrorAction SilentlyContinue
     }
 
-    # Define an array of AppxPackage names that are considered removable
-    $removableApps = @(
-        "Microsoft.BingWeather", "Microsoft.DesktopAppInstaller", "Microsoft.GetHelp", 
-        "Microsoft.Getstarted", "Microsoft.Messaging", "Microsoft.Microsoft3DViewer", 
-        "Microsoft.MicrosoftOfficeHub", "Microsoft.MicrosoftSolitaireCollection", 
-        "Microsoft.MicrosoftStickyNotes", "Microsoft.MixedReality.Portal", 
-        "Microsoft.OneConnect", "Microsoft.Print3D", "Microsoft.SkypeApp", "Microsoft.Wallet", 
-        "Microsoft.WebMediaExtensions", "Microsoft.WebpImageExtension", 
-        "Microsoft.WindowsCamera", "microsoft.windowscommunicationsapps", "Microsoft.WindowsFeedbackHub", 
-        "Microsoft.WindowsMaps", "Microsoft.WindowsSoundRecorder", "Microsoft.Xbox.TCUI", 
-        "Microsoft.XboxApp", "Microsoft.XboxGameOverlay", "Microsoft.XboxGamingOverlay", 
-        "Microsoft.XboxIdentityProvider", "Microsoft.XboxSpeechToTextOverlay", "Microsoft.YourPhone", 
-        "Microsoft.ZuneMusic", "Microsoft.ZuneVideo", "Microsoft.WindowsFeedback", 
-        "Windows.ContactSupport", "PandoraMedia", "AdobeSystemIncorporated.AdobePhotoshop", 
-        "Duolingo", "Microsoft.BingNews", "Microsoft.Office.Sway", "Microsoft.Advertising.Xaml", 
-        "Microsoft.NET.Native.Framework.1.*", "Microsoft.Services.Store.Engagement", 
-        "ActiproSoftware", "EclipseManager", "king.com.*"
-    )
+    # Array of AppxPackage names that are considered removable.
+    . .\RemovableApps.ps1
+    $removableApps = Get-RemovableApps
 
     # Loop through the array to remove each specified AppxPackage
     foreach ($appName in $removableApps) {
@@ -487,16 +428,9 @@ New-Item -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\CurrentVersion\PushNot
 Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\CurrentVersion\PushNotifications" -Name "NoToastApplicationNotificationOnLockScreen" -Value 1 -Type DWord
 
 # Turn off services we don't need
-# Define an array of service names to be stopped and disabled
-$nonNeededservices = @(
-    "WpcMonSvc", "SharedRealitySvc", "Fax", "autotimesvc", "wisvc", "SDRSVC",
-    "MixedRealityOpenXRSvc", "WalletService", "SmsRouter", "SharedAccess", "MapsBroker", "PhoneSvc",
-    "ScDeviceEnum", "TabletInputService", "icssvc", "edgeupdatem", "edgeupdate",
-    "MicrosoftEdgeElevationService", "RetailDemo", "MessagingService", "PimIndexMaintenanceSvc",
-    "OneSyncSvc", "UnistoreSvc", "DiagTrack", "dmwappushservice",
-    "diagnosticshub.standardcollector.service", "diagsvc", "WerSvc", "wercplsupport",
-    "SCardSvr", "SEMgrSvc"
-)
+# Array of service names to be stopped and disabled.
+. ./NonNeededservices.ps1
+$nonNeededservices = Get-NonNeededServices
 
 # Loop through each service in the array
 foreach ($serviceName in $nonNeededservices) {
